@@ -1,0 +1,226 @@
+@page "/edit"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.VisualBasic
+@using Assignement3.Models
+@rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Edit</PageTitle>
+
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h1>Velkommen til student endrerererern!</h1>
+
+            <fieldset>
+                <legend>Søk etter et fag!</legend>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="Søk etter fag" @bind="courseNavn" @onkeydown="HandleKeyPress"/>
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="button" @onclick="SearchCourses">Søk</button>
+                        <button class="btn btn-secondary" type="button" @onclick="EditStudentWithoutParameter">Edit</button>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+
+    @if (redigerer)
+    {
+        <div class="row">
+            <div class="col">
+                <p class="mb-2">Hva vil du gjøre med faget?</p>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-outline-secondary" @onclick="AddStudent">Legg til student</button>
+                    <button class="btn btn-outline-secondary" @onclick="RemoveStudent">Fjern student</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (feilmelding != "")
+    {
+        <div class="row mt-3">
+            <div class="col">
+                <div>@feilmelding</div>
+            </div>
+        </div>
+    }
+
+    @if (students != null)
+    {
+        <div class="row mt-3">
+            <div class="col">
+                <p>Velg en student</p>
+
+                @foreach (var s in students)
+                {
+                    <div class="mb-2">
+                        <button class="btn btn-light" @onclick="() => SetSelectedStudent(s)">@s.FirstName @s.LastName</button>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (alle != null)
+    {
+        <div class="row mt-4">
+            <div class="col">
+                <h2>Søkeresultater:</h2>
+                @if (alle.Count == 0)
+                {
+                    <p>Ingen fag funnet.</p>
+                }
+                else
+                {
+                    <ul class="list-group">
+                        @foreach (var c in alle)
+                        {
+                            <li class="list-group-item">@c.CourseName</li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string courseNavn;
+    private bool leggeTilEllerIkke;
+    List<Course> alle;
+    private string feilmelding;
+    private bool redigerer;
+    List<Student> students;
+    private Student _student;
+
+    private async Task AddStudent()
+    {
+        leggeTilEllerIkke = true;
+        using var mdc = new MyDbContext();
+        var allStudents = await mdc.Students.ToListAsync();
+
+        var studentsInCourse = await mdc.Grade
+            .Include(s => s.Student)
+            .Where(s => s.Course.CourseName == courseNavn)
+            .Select(s => s.Student)
+            .ToListAsync();
+        students = allStudents.Except(studentsInCourse).ToList();
+        
+        StateHasChanged();
+    }
+
+    private async Task RemoveStudent()
+    {
+        leggeTilEllerIkke = false;
+        using var mdc = new MyDbContext();
+        students = await mdc.Grade
+            .Include(s => s.Student)
+            .Where(s => s.Course.CourseName == courseNavn)
+            .Select(s => s.Student)
+            .ToListAsync();
+
+        StateHasChanged();
+    }
+
+    private async Task EditStudent(string sn)
+    {
+        using var mdc = new MyDbContext();
+
+        if (mdc.Courses.Where(s => s.CourseName.Contains(courseNavn)).Count() == 1
+            || mdc.Courses.Where(s => s.CourseName.Equals(courseNavn)).Count() == 1)
+        {
+            feilmelding = "";
+            redigerer = true;
+
+            return;
+        }
+
+        if (!mdc.Courses.Any(s => s.CourseName == sn)
+            || mdc.Students.Where(s => s.FirstName.Contains(courseNavn) || s.LastName.Contains(courseNavn)).Count() > 1) ;
+           
+        {
+            feilmelding = "Det er ingen fag med det navnet, vennligst søk slik at du berre får tak i eit fag.";
+        }
+    }
+
+    private async Task SearchCourses(string sn)
+    {
+        using var myDbContext = new MyDbContext();
+
+        var searchResults = await myDbContext.SearchCourses(courseNavn);
+
+        if (searchResults != null)
+        {
+            alle = searchResults;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var myDbContext = new MyDbContext();
+        var searchResults = await myDbContext.Courses.ToListAsync();
+
+        if (searchResults != null)
+        {
+            alle = searchResults;
+        }
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SearchCourses(); // Kall metoden uten parameter
+        }
+    }
+
+    private async Task EditStudentWithoutParameter()
+    {
+        await EditStudent(courseNavn);
+    }
+
+    private async Task SearchCourses()
+    {
+        await SearchCourses(courseNavn);
+    }
+
+    private async void SetSelectedStudent(Student student)
+    {
+        _student = student;
+        using var mdc = new MyDbContext();
+
+        if (leggeTilEllerIkke) // legge til student
+        {
+            var result = await JSRuntime.InvokeAsync<string>("prompt", "Skriv inn karakter her");
+
+            var course = mdc.Courses.FirstOrDefault(c => c.CourseName == courseNavn);
+            var courseCode = course?.CourseCode;
+
+            // Create a grade and add it to _student ICollection
+            var grade = new Grade
+            {
+                CourseCode = courseCode,
+                Score = result,
+                StudentId = _student.StudentId,
+                // Don't set the Student property here
+                Course = course
+            };
+
+            // Add the grade to the Grades table in the database
+            mdc.Grade.Add(grade);
+
+            await mdc.SaveChangesAsync();
+        }
+        else
+        {
+            // Fjerne student
+            var grade = mdc.Grade.FirstOrDefault(g => g.StudentId == _student.StudentId && g.Course.CourseName == courseNavn);
+            mdc.Grade.Remove(grade);
+            await mdc.SaveChangesAsync();
+        }
+    }
+
+}

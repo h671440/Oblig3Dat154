@@ -1,0 +1,80 @@
+@page "/grades"
+@using Assignement3.Models
+@rendermode InteractiveServer
+
+<PageTitle>Grades</PageTitle>
+
+<h1>Karakterer</h1>
+
+@{
+    var grades = new[] { "", "A", "B", "C", "D", "E", "F" };
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <label for="gradeSelect" class="form-label">Velg karakter:</label>
+            <select id="gradeSelect" name="gradeSelect" class="form-select" @bind="selectedGrade">
+                @foreach (var grade in grades)
+                {
+                    <option value="@grade">@grade</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label>&nbsp;</label><br>
+            <button type="button" class="btn btn-primary" @onclick="GetGradesAbove">Hent karakterer</button>
+        </div>
+    </div>
+
+    @if (gradesAbove != null)
+    {
+        <div class="row mt-4">
+            <div class="col">
+                <h2>Resultater:</h2>
+                @if (gradesAbove.Count == 0)
+                {
+                    <p>Ingen karakterer funnet.</p>
+                }
+                else
+                {
+                    @foreach (var g in gradesAbove)
+                    {
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <p class="card-text">Student: @g.Student.FirstName @g.Student.LastName</p>
+                                <p class="card-text">Karakter: @g.Grade.Score</p>
+                                <p class="card-text">Fag: @g.Course.CourseName</p>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code
+{
+    List<StudentGradeCourse> gradesAbove;
+    string selectedGrade;
+
+    private async Task GetGradesAbove()
+    {
+        if (selectedGrade == null || string.IsNullOrWhiteSpace(selectedGrade))
+        {
+            return;
+        }
+
+        Console.WriteLine("Henter karakterer over " + selectedGrade + "...");
+        using var mdc = new MyDbContext();
+
+        var searchResults = await mdc.GradesAbove(selectedGrade);
+
+        if (searchResults != null)
+        {
+            gradesAbove = searchResults;
+            Console.WriteLine("Karakterer hentet");
+        }
+    }
+}

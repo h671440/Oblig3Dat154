@@ -1,0 +1,73 @@
+@page "/"
+@using Assignement3.Models
+@rendermode InteractiveServer
+
+<PageTitle>Home</PageTitle>
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h1>Velkommen til studentsøkeren!</h1>
+
+            <fieldset>
+                <legend>Søk etter en student!</legend>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="Søk etter student" @bind="partialStudentName" @onkeydown="HandleKeyPress" />
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="button" @onclick="Search">Søk</button>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+
+    @if (students != null)
+    {
+        <div class="row">
+            <div class="col">
+                <br />
+                <h2>Søkeresultater:</h2>
+                @if (students.Count == 0)
+                {
+                    <p>Ingen studenter funnet.</p>
+                }
+                else
+                {
+                    <ul class="list-group">
+                        @foreach (var student in students)
+                        {
+                            <li class="list-group-item">@student.FirstName @student.LastName</li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string partialStudentName;
+    private List<Student> students;
+
+    private async Task Search()
+    {
+        Console.WriteLine("Studenter hentes...");
+        using var myDbContext = new MyDbContext();
+
+        var searchResults = await myDbContext.SearchStudents(partialStudentName);
+
+        if (searchResults != null)
+        {
+            students = searchResults;
+            Console.WriteLine("Studenter hentet");
+        }
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Search();
+        }
+    }
+}

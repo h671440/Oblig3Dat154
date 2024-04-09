@@ -15,4 +15,19 @@
       </PackageReference>
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Views\Grade\Delete.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Grade\Details.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Grade\Edit.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Grade\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="Components\Pages\Grade\Delete.cshtml" />
+      <_ContentIncludedByDefault Remove="Components\Pages\Grade\Details.cshtml" />
+      <_ContentIncludedByDefault Remove="Components\Pages\Grade\Edit.cshtml" />
+      <_ContentIncludedByDefault Remove="Components\Pages\Grade\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="Components\Pages\Student\Delete.cshtml" />
+      <_ContentIncludedByDefault Remove="Components\Pages\Student\Details.cshtml" />
+      <_ContentIncludedByDefault Remove="Components\Pages\Student\Edit.cshtml" />
+      <_ContentIncludedByDefault Remove="Components\Pages\Student\Index.cshtml" />
+    </ItemGroup>
+
 </Project>

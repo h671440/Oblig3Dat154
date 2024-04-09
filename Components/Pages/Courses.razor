@@ -1,0 +1,65 @@
+@page "/courses"
+@using Microsoft.EntityFrameworkCore
+@using Assignement3.Models
+@rendermode InteractiveServer
+
+<PageTitle>Fag</PageTitle>
+
+<div class="row">
+    <div class="col">
+        <h1>Velg et fag</h1>
+
+        @foreach (var c in _courses)
+        {
+            <button @onclick="() => NavigateToCourse(c.CourseCode)" class="btn btn-primary mb-2">@c.CourseName</button>
+            <br>
+        }
+    </div>
+
+    <div class="col">
+        @if (courses != null)
+        {
+            <div class="card">
+                <div class="card-header">
+                    Resultater
+                </div>
+                <div class="card-body">
+                    @foreach (var s in courses)
+                    {
+                        <div>
+                            <p>Student: @s.Student.FirstName @s.Student.LastName</p>
+                            <p>Karakter: @s.Grade.Score</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<StudentGrade> courses;
+
+    // Må være initialisert til å være new List<Course>, hvis ikke krasjer siden
+    private List<Course> _courses = new List<Course>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var myDbContext = new MyDbContext();
+        _courses = await myDbContext.Courses.ToListAsync();
+    }
+
+    private async Task NavigateToCourse(string courseCode)
+    {
+        Console.WriteLine("Fag hentes...");
+        using var myDbContext = new MyDbContext();
+
+        var searchResults = await myDbContext.StudentsInCourse(courseCode);
+
+        if (searchResults != null)
+        {
+            courses = searchResults;
+            Console.WriteLine("Fag hentet");
+        }
+    }
+}
