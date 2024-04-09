@@ -1,5 +1,6 @@
 @page "/stryk"
 @using Microsoft.EntityFrameworkCore
+@using Assignement3.Models
 @rendermode InteractiveServer
 
 <PageTitle>Stryk</PageTitle>
@@ -33,7 +34,7 @@
     {
         using var myDbContext = new MyDbContext();
 
-        noobs = await myDbContext.Grade
+        stryk = await myDbContext.Grade
             .Include(g => g.Course)
             .Include(g => g.Student)
             .Where(g => g.Score.Equals("F"))
@@ -45,4 +46,5 @@
             })
             .ToListAsync();
     }
+
 }
