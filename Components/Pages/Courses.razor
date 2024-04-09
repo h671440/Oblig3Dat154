@@ -27,7 +27,7 @@
                     @foreach (var s in courses)
                     {
                         <div>
-                            <p>Student: @s.Student.FirstName @s.Student.LastName</p>
+                            <p>Student: @s.Student.Studentname</p>
                             <p>Karakter: @s.Grade.Score</p>
                         </div>
                     }
@@ -46,7 +46,7 @@
     protected override async Task OnInitializedAsync()
     {
         using var myDbContext = new MyDbContext();
-        _courses = await myDbContext.Courses.ToListAsync();
+        _courses = await myDbContext.Course.ToListAsync();
     }
 
     private async Task NavigateToCourse(string courseCode)

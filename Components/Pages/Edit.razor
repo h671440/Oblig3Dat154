@@ -57,7 +57,7 @@
                 @foreach (var s in students)
                 {
                     <div class="mb-2">
-                        <button class="btn btn-light" @onclick="() => SetSelectedStudent(s)">@s.FirstName @s.LastName</button>
+                        <button class="btn btn-light" @onclick="() => SetSelectedStudent(s)">@s.Studentname</button>
                     </div>
                 }
             </div>
@@ -100,7 +100,7 @@
     {
         leggeTilEllerIkke = true;
         using var mdc = new MyDbContext();
-        var allStudents = await mdc.Students.ToListAsync();
+        var allStudents = await mdc.Student.ToListAsync();
 
         var studentsInCourse = await mdc.Grade
             .Include(s => s.Student)
@@ -129,8 +129,8 @@
     {
         using var mdc = new MyDbContext();
 
-        if (mdc.Courses.Where(s => s.CourseName.Contains(courseNavn)).Count() == 1
-            || mdc.Courses.Where(s => s.CourseName.Equals(courseNavn)).Count() == 1)
+        if (mdc.Course.Where(s => s.CourseName.Contains(courseNavn)).Count() == 1
+            || mdc.Course.Where(s => s.CourseName.Equals(courseNavn)).Count() == 1)
         {
             feilmelding = "";
             redigerer = true;
@@ -138,8 +138,8 @@
             return;
         }
 
-        if (!mdc.Courses.Any(s => s.CourseName == sn)
-            || mdc.Students.Where(s => s.FirstName.Contains(courseNavn) || s.LastName.Contains(courseNavn)).Count() > 1) ;
+        if (!mdc.Course.Any(s => s.CourseName == sn)
+            || mdc.Student.Where(s => s.Studentname.Contains(courseNavn)).Count() > 1) ;
            
         {
             feilmelding = "Det er ingen fag med det navnet, vennligst søk slik at du berre får tak i eit fag.";
@@ -150,7 +150,7 @@
     {
         using var myDbContext = new MyDbContext();
 
-        var searchResults = await myDbContext.SearchCourses(courseNavn);
+        var searchResults = await myDbContext.SearchCourse(courseNavn);
 
         if (searchResults != null)
         {
@@ -161,7 +161,7 @@
     protected override async Task OnInitializedAsync()
     {
         using var myDbContext = new MyDbContext();
-        var searchResults = await myDbContext.Courses.ToListAsync();
+        var searchResults = await myDbContext.Course.ToListAsync();
 
         if (searchResults != null)
         {
@@ -196,7 +196,7 @@
         {
             var result = await JSRuntime.InvokeAsync<string>("prompt", "Skriv inn karakter her");
 
-            var course = mdc.Courses.FirstOrDefault(c => c.CourseName == courseNavn);
+            var course = mdc.Course.FirstOrDefault(c => c.CourseName == courseNavn);
             var courseCode = course?.CourseCode;
 
             // Create a grade and add it to _student ICollection
@@ -204,7 +204,7 @@
             {
                 CourseCode = courseCode,
                 Score = result,
-                StudentId = _student.StudentId,
+                StudentId = _student.Id,
                 // Don't set the Student property here
                 Course = course
             };
@@ -217,7 +217,7 @@
         else
         {
             // Fjerne student
-            var grade = mdc.Grade.FirstOrDefault(g => g.StudentId == _student.StudentId && g.Course.CourseName == courseNavn);
+            var grade = mdc.Grade.FirstOrDefault(g => g.StudentId == _student.Id && g.Course.CourseName == courseNavn);
             mdc.Grade.Remove(grade);
             await mdc.SaveChangesAsync();
         }

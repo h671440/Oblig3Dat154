@@ -1,0 +1,48 @@
+@page "/stryk"
+@using Microsoft.EntityFrameworkCore
+@rendermode InteractiveServer
+
+<PageTitle>Stryk</PageTitle>
+
+<div class="container">
+    <fieldset>
+        <legend>De som har stryket i ett fag </legend>
+
+        @if (stryk != null && stryk.Any())
+        {
+            @foreach (var v in stryk)
+            {
+                <div class="border rounded mb-3 p-3">
+                    <h5>@v.Student.Studentname</h5>
+                    <p><strong>Karakter:</strong> @v.Grade.Score</p>
+                    <p><strong>Fag:</strong> @v.Course.CourseName</p>
+                </div>
+            }
+        }
+        else
+        {
+            <p>Ingen studenter har fått stryk på noen fag.</p>
+        }
+    </fieldset>
+</div>
+
+@code {
+    List<StudentGradeCourse> stryk;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var myDbContext = new MyDbContext();
+
+        noobs = await myDbContext.Grade
+            .Include(g => g.Course)
+            .Include(g => g.Student)
+            .Where(g => g.Score.Equals("F"))
+            .Select(g => new StudentGradeCourse
+            {
+                Student = g.Student,
+                Grade = g,
+                Course = g.Course
+            })
+            .ToListAsync();
+    }
+}
